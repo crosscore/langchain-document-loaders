@@ -7,8 +7,7 @@ pandas==2.2.2
 python-dotenv
 pypdf
 
-# UnstructuredWordDocumentLoader
+# xlsx
 unstructured
-docx2txt
+networkx
 psutil
-python-docx

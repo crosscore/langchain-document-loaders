@@ -6,8 +6,3 @@ pandas==2.2.2
 
 python-dotenv
 pypdf
-
-# xlsx
-unstructured
-networkx
-psutil

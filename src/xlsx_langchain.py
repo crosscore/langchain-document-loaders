@@ -5,7 +5,7 @@ from langchain_community.document_loaders import UnstructuredExcelLoader
 def convert_xlsx_to_txt_and_json(xlsx_path, txt_output_path, json_output_path):
     try:
         # XLSXローダーを初期化
-        loader = UnstructuredExcelLoader(xlsx_path, mode="elements")
+        loader = UnstructuredExcelLoader(xlsx_path)
 
         # XLSXを読み込む
         elements = loader.load()

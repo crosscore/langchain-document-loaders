@@ -1,15 +1,20 @@
 {
-    "name": "Langchain Document Loaders",
-    "dockerComposeFile": "../docker-compose.yml",
-    "service": "backend",
-    "workspaceFolder": "/app",
-    "postCreateCommand": "pip install -r requirements.txt",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "ms-python.vscode-pylance"
-            ]
-        }
-    }
+	"name": "Langchain Document Loaders",
+	"dockerComposeFile": "../docker-compose.yml",
+	"service": "backend",
+	"workspaceFolder": "/app",
+	"postCreateCommand": "pip install -r requirements.txt",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-azuretools.vscode-docker",
+				"eamodio.gitlens"
+			]
+		}
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {}
+	}
 }

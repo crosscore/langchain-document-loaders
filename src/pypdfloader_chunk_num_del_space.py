@@ -11,17 +11,28 @@ def extract_text_from_pdf(file_path):
     print(f"Processing file: {os.path.basename(file_path)}")
     loader = PyPDFLoader(file_path)
     pages = loader.load()
-    print(pages)
     return pages
 
 def preprocess_text(text):
-    text = re.sub(r'\n{2,}', '\n\n', text)
-    text = re.sub(r' +\n', '\n', text)
+    has_japanese = bool(re.search(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]', text))
+    has_english = bool(re.search(r'[a-zA-Z]', text))
+
+    lines = text.split('\n')
+    processed_lines = []
+    for line in lines:
+        if has_japanese and not has_english:
+            line = re.sub(r'(?<!\n)\s+(?!\n)', '', line)
+        else:
+            line = re.sub(r'(?<!\n)\s+(?!\n)', ' ', line)
+        processed_lines.append(line)
+
+    text = '\n'.join(processed_lines)
+    text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
 def process_pdf_to_csv(file_name, pages):
     text_splitter = CharacterTextSplitter(
-        chunk_size=10,
+        chunk_size=100,
         chunk_overlap=0,
         separator="\n\n"
     )
@@ -60,7 +71,7 @@ def process_pdf_to_csv(file_name, pages):
 def write_to_csv(data, output_file):
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, 'w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=['file_name', 'file_type', 'location', 'chunk_number', 'manual'])
+        writer = csv.DictWriter(file, fieldnames=['file_name', 'file_type', 'location', 'chunk_number', 'manual'], quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
         writer.writerows(data)
 

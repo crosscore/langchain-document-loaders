@@ -1,0 +1,9 @@
+services:
+  backend:
+    build: .
+    volumes:
+      - .:/app  # プロジェクト全体をマウント
+      - ./data/input/pdf:/app/data/input/pdf
+      - ./data/output/csv/pdf:/app/data/output/csv/pdf
+    environment:
+      - PYTHONUNBUFFERED=1

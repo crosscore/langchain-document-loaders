@@ -6,7 +6,3 @@ pandas==2.2.2
 
 python-dotenv
 pypdf
-
-unstructured
-networkx
-psutil

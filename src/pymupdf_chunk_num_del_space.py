@@ -1,7 +1,7 @@
 import os
 import csv
 import re
-from pypdf import PdfReader
+import fitz  # PyMuPDF
 from langchain_text_splitters import CharacterTextSplitter
 
 input_folder = "../data/input/pdf"
@@ -9,28 +9,34 @@ output_folder = "../data/output/csv/pdf"
 
 def extract_text_from_pdf(file_path):
     print(f"Processing file: {os.path.basename(file_path)}")
-    reader = PdfReader(file_path)
+    doc = fitz.open(file_path)
     pages = []
-    for page_num, page in enumerate(reader.pages):
-        text = page.extract_text()
-        pages.append({'page_num': page_num, 'content': text})
+    for page in doc:
+        text = page.get_text()
+        print(text)
+        page_label = page.get_label()
+        pages.append({'page_num': page.number, 'page_label': page_label, 'content': text})
+    doc.close()
     return pages
 
 def preprocess_text(text):
+    # 日本語と英語の文字を含むかどうかをチェック
     has_japanese = bool(re.search(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]', text))
     has_english = bool(re.search(r'[a-zA-Z]', text))
 
-    lines = text.split('\n')
-    processed_lines = []
-    for line in lines:
-        if has_japanese and not has_english:
-            line = re.sub(r'(?<!\n)\s+(?!\n)', '', line)
-        else:
-            line = re.sub(r'(?<!\n)\s+(?!\n)', ' ', line)
-        processed_lines.append(line)
+    # 余分な空白と改行を削除
+    text = re.sub(r'\s+', ' ', text)
 
-    text = '\n'.join(processed_lines)
+    # 日本語テキストの場合、単語間のスペースを削除
+    if has_japanese and not has_english:
+        text = re.sub(r'(?<=[\u3000-\u9faf])\s+(?=[\u3000-\u9faf])', '', text)
+
+    # 文章の区切りを維持
+    text = re.sub(r'([。．！？])\s*', r'\1\n', text)
+
+    # 余分な改行を削除し、段落を維持
     text = re.sub(r'\n{3,}', '\n\n', text)
+
     return text.strip()
 
 def process_pdf_to_csv(file_name, pages):
@@ -44,25 +50,26 @@ def process_pdf_to_csv(file_name, pages):
     chunk_number = 0
     for page in pages:
         page_num = page['page_num']
+        page_label = page['page_label']
         page_text = preprocess_text(page['content'])
-        print(f"Page {page_num} text length: {len(page_text)}")
+        print(f"Page {page_num} (Label: {page_label}) text length: {len(page_text)}")
 
         if page_text:
             chunks = text_splitter.split_text(page_text)
-            print(f"Page {page_num} chunks: {len(chunks)}")
+            print(f"Page {page_num} (Label: {page_label}) chunks: {len(chunks)}")
 
             if not chunks:
-                print(f"Warning: No chunks created for page {page_num}. Using whole page as one chunk.")
+                print(f"Warning: No chunks created for page {page_num} (Label: {page_label}). Using whole page as one chunk.")
                 chunks = [page_text]
         else:
-            print(f"Warning: Empty text on page {page_num}")
+            print(f"Warning: Empty text on page {page_num} (Label: {page_label})")
             chunks = []
 
         for chunk in chunks:
             csv_rows.append({
                 'file_name': file_name,
                 'file_type': 'pdf',
-                'location': str(page_num),
+                'location': f"{page_num}:{page_label}",
                 'chunk_number': chunk_number,
                 'manual': chunk
             })

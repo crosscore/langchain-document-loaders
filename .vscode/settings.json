@@ -1,11 +1,14 @@
 {
-	"python.defaultInterpreterPath": "/usr/local/bin/python",
-	"python.analysis.extraPaths": [
-		"${workspaceFolder}",
-		"${workspaceFolder}/data/input/pdf",
-		"${workspaceFolder}/data/output/csv/pdf",
-		"/app"
-	],
-	"python.analysis.typeCheckingMode": "basic",
-	"python.analysis.autoImportCompletions": true
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/data/input/pdf",
+        "${workspaceFolder}/data/output/csv/pdf",
+        "/app"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.stubPath": "${workspaceFolder}",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportGeneralTypeIssues": "none"
+    }
 }

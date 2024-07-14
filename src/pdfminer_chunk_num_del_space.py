@@ -1,7 +1,13 @@
 import os
 import csv
 import re
-from pypdf import PdfReader
+from io import StringIO
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
 from langchain_text_splitters import CharacterTextSplitter
 
 input_folder = "../data/input/pdf"
@@ -9,28 +15,42 @@ output_folder = "../data/output/csv/pdf"
 
 def extract_text_from_pdf(file_path):
     print(f"Processing file: {os.path.basename(file_path)}")
-    reader = PdfReader(file_path)
     pages = []
-    for page_num, page in enumerate(reader.pages):
-        text = page.extract_text()
-        pages.append({'page_num': page_num, 'content': text})
+
+    with open(file_path, 'rb') as file:
+        parser = PDFParser(file)
+        document = PDFDocument(parser)
+        rsrcmgr = PDFResourceManager()
+
+        for page_num, page in enumerate(PDFPage.create_pages(document), 1):
+            output_string = StringIO()
+            with TextConverter(rsrcmgr, output_string, laparams=LAParams()) as device:
+                interpreter = PDFPageInterpreter(rsrcmgr, device)
+                interpreter.process_page(page)
+
+            text = output_string.getvalue()
+            pages.append({'page_num': page_num, 'content': text})
+
     return pages
 
 def preprocess_text(text):
+    # 日本語と英語の文字を含むかどうかをチェック
     has_japanese = bool(re.search(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]', text))
     has_english = bool(re.search(r'[a-zA-Z]', text))
 
-    lines = text.split('\n')
-    processed_lines = []
-    for line in lines:
-        if has_japanese and not has_english:
-            line = re.sub(r'(?<!\n)\s+(?!\n)', '', line)
-        else:
-            line = re.sub(r'(?<!\n)\s+(?!\n)', ' ', line)
-        processed_lines.append(line)
+    # 余分な空白と改行を削除
+    text = re.sub(r'\s+', ' ', text)
 
-    text = '\n'.join(processed_lines)
+    # 日本語テキストの場合、単語間のスペースを削除
+    if has_japanese and not has_english:
+        text = re.sub(r'(?<=[\u3000-\u9faf])\s+(?=[\u3000-\u9faf])', '', text)
+
+    # 文章の区切りを維持
+    text = re.sub(r'([。．！？])\s*', r'\1\n', text)
+
+    # 余分な改行を削除し、段落を維持
     text = re.sub(r'\n{3,}', '\n\n', text)
+
     return text.strip()
 
 def process_pdf_to_csv(file_name, pages):

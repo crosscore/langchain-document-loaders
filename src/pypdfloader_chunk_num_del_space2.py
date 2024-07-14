@@ -14,20 +14,22 @@ def extract_text_from_pdf(file_path):
     return pages
 
 def preprocess_text(text):
-    has_japanese = bool(re.search(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]', text))
-    has_english = bool(re.search(r'[a-zA-Z]', text))
+    # Replace form feed characters and multiple spaces
+    text = text.replace('\f', '\n\n').replace('  ', ' ')
 
-    lines = text.split('\n')
-    processed_lines = []
-    for line in lines:
-        if has_japanese and not has_english:
-            line = re.sub(r'(?<!\n)\s+(?!\n)', '', line)
-        else:
-            line = re.sub(r'(?<!\n)\s+(?!\n)', ' ', line)
-        processed_lines.append(line)
+    # Process Japanese and English text differently
+    if re.search(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]', text):
+        # For Japanese text
+        text = re.sub(r'(?<=[^\n])\n(?=[^\n])', '', text)  # Remove single newlines
+        text = re.sub(r'\s+', '', text)  # Remove all spaces
+    else:
+        # For English text
+        text = re.sub(r'(?<=[^\n])\n(?=[^\n])', ' ', text)  # Replace single newlines with space
+        text = re.sub(r'\s+', ' ', text)  # Normalize spaces
 
-    text = '\n'.join(processed_lines)
+    # Ensure proper paragraph breaks
     text = re.sub(r'\n{3,}', '\n\n', text)
+
     return text.strip()
 
 def process_pdf_to_dataframe(file_name, pages):
@@ -88,7 +90,7 @@ def main():
 
             output_file = os.path.join(output_folder, f"{os.path.splitext(file_name)[0]}.csv")
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            df.to_csv(output_file, index=False, quoting=1)  # quoting=1 is equivalent to csv.QUOTE_ALL
+            df.to_csv(output_file, index=False, quoting=1)  # quoting=1 is QUOTE_ALL
             print(f"CSV file created: {output_file}")
 
 if __name__ == "__main__":

@@ -1,0 +1,7 @@
+"file_name","file_type","location","logical_page_num","chunk_number","manual"
+"page_test.pdf","pdf","0","999","0","999 Index 0 のページの本文内容です。この文章は、改行された際に、スペースが生じないかをチェックするための文章です。 My name is Yuu. How are you?"
+"page_test.pdf","pdf","1","-","1","1000 
+
+この文章は最初のページから、次のページへ移動した際に文字がどのように分割されるかをチェックするための文章です。"
+"page_test.pdf","pdf","2","-","2","1001 Index 2 の本文内容です。"
+"page_test.pdf","pdf","3","-","3","1002 Index 3 の本文内容です。"
